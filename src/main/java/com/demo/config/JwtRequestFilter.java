@@ -1,4 +1,5 @@
 package com.demo.config;
+
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import com.demo.config.JwtUtil;
@@ -22,7 +23,7 @@ import java.util.List;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
-    private JwtUtil  jwtUtil;
+    private JwtUtil jwtUtil;
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -56,7 +57,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     .toList();
             if (jwtUtil.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null,authorities);
+                        userDetails, null, authorities);
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
