@@ -1,6 +1,5 @@
 package com.demo.entity;
 
-import com.demo.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
