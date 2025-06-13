@@ -6,6 +6,7 @@ import com.demo.exception.InvalidCredentialsException;
 import com.demo.model.AuthRequest;
 import com.demo.model.AuthResponse;
 import com.demo.model.GoogleLoginRequest;
+import com.demo.service.SmsService;
 import com.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SmsService smsService;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody AuthRequest request) {
@@ -49,5 +53,16 @@ public class AuthController {
         }
         AuthResponse response = userService.loginWithGoogle(idTokenString);
         return ResponseEntity.ok(response);
+    }
+    @PostMapping("/send")
+    public String sendSms(@RequestParam String to, @RequestParam String message) {
+        smsService.sendSms(to, message);
+        return "SMS sent successfully!";
+    }
+
+    @PostMapping("/check")
+    public String checkCode(@RequestParam String phone, @RequestParam String code) {
+        boolean isValid = smsService.checkVerificationCode(phone, code);
+        return isValid ? "Verified successfully!" : "Invalid code";
     }
 }
