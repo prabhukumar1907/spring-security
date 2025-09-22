@@ -55,33 +55,42 @@ public class UserService {
 
     public User creatUser(User user) {
         String hashedPassword= passwordEncoder.encode(user.getPassword());
+
+        user.setRole(Role.USER);
         user.setPassword(hashedPassword);
         return userRepository.save(user);
     }
 
     public AuthResponse login(AuthRequest request) {
+        User user;
         try {
+            user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException("Invalid email or password");
         }
+
         final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+
         final String jwt = jwtUtil.generateToken(userDetails);
 
         return AuthResponse.builder()
+                .userDetails(user)
                 .access_token(jwt)
                 .success(true)
                 .message("Successfully logged in")
                 .build();
     }
 
+
     public AuthResponse loginWithGoogle(String idTokenString) {
         try {
             System.out.println("Verifying token: " + idTokenString);
 
-            // Parse token for inspection
             GoogleIdToken parsedToken = GoogleIdToken.parse(GsonFactory.getDefaultInstance(), idTokenString);
             System.out.println("Audience: " + parsedToken.getPayload().getAudience());
             System.out.println("Issuer: " + parsedToken.getPayload().getIssuer());
@@ -108,7 +117,7 @@ public class UserService {
                             newUser.setName(name);
                             newUser.setCreatedAt(LocalDateTime.now());
                             newUser.setUpdatedAt(LocalDateTime.now());
-                            newUser.setRoles(Collections.singletonList(String.valueOf(Role.USER)));
+                            newUser.setRole(Role.USER);
                             return userRepository.save(newUser);
                         });
 

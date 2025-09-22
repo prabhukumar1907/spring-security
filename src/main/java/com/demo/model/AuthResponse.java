@@ -13,5 +13,6 @@ public class AuthResponse {
     private String access_token;
     private Boolean success;
     private String message;
+    private Object userDetails;
 
 }

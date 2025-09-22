@@ -5,15 +5,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,25 +52,39 @@ public class JwtUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+
+        // Example: Add role info as claim
+        Collection<? extends GrantedAuthority> roles = userDetails.getAuthorities();
+        if (roles.contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            claims.put("role", "ADMIN");
+        } else if (roles.contains(new SimpleGrantedAuthority("ROLE_MECHANIC"))) {
+            claims.put("role", "MECHANIC");
+        } else {
+            claims.put("role", "USER");
+        }
+
         return createToken(claims, userDetails);
     }
 
     private String createToken(Map<String, Object> claims, UserDetails subject) {
 
-        List<String> roles = subject.getAuthorities().stream()
+        // Extract the first role as String, or "USER" if none found
+        String role = subject.getAuthorities().stream()
                 .map(auth -> auth.getAuthority().replace("ROLE_", ""))
-                .toList();
+                .findFirst()
+                .orElse("USER");
 
-        System.out.println(roles);
-        System.out.println(subject.getAuthorities());
+        System.out.println("Role in token: " + role);
 
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject.getUsername())
-                .claim("roles", roles)
+                .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
-                .signWith(SECRET_KEY)
+                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
+
+
 }
